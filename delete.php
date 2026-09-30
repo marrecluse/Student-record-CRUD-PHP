@@ -1,23 +1,16 @@
 <?php
-include 'conn.php';
+require 'conn.php';
+requireLogin();
 
-
-//reading ID; to perform action specifically
-$id = $_GET['id'];
-
-
-
-$q = "DELETE FROM `user` WHERE id = $id ";
-
-$stmt=$conn->prepare($q);
-
-$stmt->execute();
-
-if($stmt->execute()){
-
-//To redirect on display page
-header("location: display.php");
-
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+    header('Location: display.php');
+    exit;
 }
 
- ?>
+$id = (int) ($_POST['id'] ?? 0);
+
+$stmt = $conn->prepare('DELETE FROM students WHERE id = ?');
+$stmt->bind_param('i', $id);
+$stmt->execute();
+
+header('Location: display.php');

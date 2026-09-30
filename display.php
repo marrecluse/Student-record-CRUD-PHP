@@ -1,3 +1,7 @@
+<?php
+require 'conn.php';
+requireLogin();
+?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -45,7 +49,6 @@
 
  <th class="text-warning"> ID </th>
  <th class="text-warning"> Username </th>
- <th class="text-warning"> Password </th>
  <th class="text-warning"> Delete </th>
  <th class="text-warning"> Update </th>
 
@@ -53,22 +56,24 @@
 
  <?php
 
- include 'conn.php';
- $q = "select * from user";
-  $stmt=$conn->prepare($q);
-  $stmt->execute();
- 
-  $stmt->bind_result($id,$username,$password);
+ $q = 'SELECT id, username FROM students ORDER BY id';
+ $stmt = $conn->prepare($q);
+ $stmt->execute();
+ $stmt->bind_result($id, $username);
 
-
- while($stmt->fetch()){
+ while ($stmt->fetch()) {
  ?>
  <tr class="text-center">
- <td class="text-white"> <?php echo $id;  ?> </td>
- <td class="text-white"> <?php echo $username;  ?> </td>
- <td class="text-white"> <?php echo $password;  ?> </td>
- <td class="text-white"> <button class="btn-danger btn"> <a href="delete.php?id=<?php echo $id; ?>" class="text-white"> Delete </a></button></td>
- <td class="text-white"> <button class="btn-primary btn"> <a href="update.php?id=<?php echo $id; ?>" class="text-white"> Update </a> </button> </td>
+ <td class="text-white"> <?php echo htmlspecialchars($id); ?> </td>
+ <td class="text-white"> <?php echo htmlspecialchars($username); ?> </td>
+ <td class="text-white">
+   <form action="delete.php" method="post" onsubmit="return confirm('Delete this student?');" style="display:inline;">
+     <?php echo csrfField(); ?>
+     <input type="hidden" name="id" value="<?php echo (int) $id; ?>">
+     <button type="submit" class="btn-danger btn text-white">Delete</button>
+   </form>
+ </td>
+ <td class="text-white"> <button class="btn-primary btn"> <a href="update.php?id=<?php echo (int) $id; ?>" class="text-white"> Update </a> </button> </td>
 
  </tr>
 
@@ -79,11 +84,12 @@
  </table>
 
  <center>
- <form class="form-group" action="insert.php" method="post">
+ <form class="form-group" action="insert.php" method="get">
    <button  class="btn btn-block bg-dark text-white btn-outline-primary font-weight-bold" type="submit" name="insert">Add Student</button>
  </form>
 
- <form class="form-group mt-3" action="index.php" method="post">
+ <form class="form-group mt-3" action="logout.php" method="post">
+   <?php echo csrfField(); ?>
    <button class="btn btn-block bg-dark text-white btn-outline-primary font-weight-bold" type="submit" name="logout">Log Out</button>
  </form>
  </center>

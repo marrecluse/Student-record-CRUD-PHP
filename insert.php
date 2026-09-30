@@ -1,19 +1,33 @@
 <?php
 
-include 'conn.php';
+require 'conn.php';
+requireLogin();
 
-if(isset($_POST['done'])){
+$error = null;
 
-// Change/Replace the variables/values accordingly
+if (isset($_POST['done'])) {
+    if (!verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        $error = 'Your session expired, please try again.';
+    } else {
+        $username = trim($_POST['username'] ?? '');
+        $password = $_POST['password'] ?? '';
 
- $username = $_POST['username'];
- $password = $_POST['password'];
- $q = "INSERT INTO `user`(`username`, `password`) VALUES (?,?)";
- $stmt=$conn->prepare($q);
- 
- $stmt->bind_param("ss",$username,$password);
- $stmt->execute();
+        if ($username === '' || $password === '') {
+            $error = 'Username and password are required.';
+        } else {
+            $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+            $q = 'INSERT INTO students (username, password_hash) VALUES (?, ?)';
+            $stmt = $conn->prepare($q);
+            $stmt->bind_param('ss', $username, $passwordHash);
 
+            if ($stmt->execute()) {
+                header('Location: display.php');
+                exit;
+            }
+
+            $error = 'Could not add student (username may already be taken).';
+        }
+    }
 }
 ?>
 
@@ -22,11 +36,6 @@ if(isset($_POST['done'])){
 <head>
  <title></title>
    <meta name="viewport" content="width=device-width, initial-scale=1">
-   <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
-   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
-   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script> -->
-
 
    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
    <link rel="stylesheet" href="assets/bootstrap/js/jquery.min.js">
@@ -61,18 +70,24 @@ if(isset($_POST['done'])){
         <h1 class="text-warning text-center">  Add Student </h1>
         </div><br>
 
+        <?php if ($error): ?>
+          <div class="alert alert-danger"><?php echo htmlspecialchars($error); ?></div>
+        <?php endif; ?>
+
+        <?php echo csrfField(); ?>
+
         <label class="font-weight-bold"> Username: </label>
         <input type="text" name="username" class="form-control"> <br>
 
        <label class="font-weight-bold"> Password: </label>
-       <input type="text" name="password" class="form-control"> <br>
+       <input type="password" name="password" class="form-control"> <br>
 
        <button class="btn btn-success font-weight-bold" type="submit" name="done"> Add </button>
-       <a href="index.php"></a>
+       <a href="display.php"></a>
 
-        
+
         </form>
-        <form class="form-group" action="display.php" method="post">
+        <form class="form-group" action="display.php" method="get">
           <button style="width: 100%;" class="btn btn-block bg-dark text-white btn-outline-primary font-weight-bold" type="submit" name="display">DISPLAY DATA</button>
         </form>
 

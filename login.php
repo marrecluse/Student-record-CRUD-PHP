@@ -1,67 +1,35 @@
 <?php
-include "conn.php";
+require 'conn.php';
 
-$username="";
-$password="";
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['username'], $_POST['pwd'])) {
+    header('Location: index.php');
+    exit;
+}
 
-if(isset($_POST["username"]) && $_POST["pwd"]) {
+if (!verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+    header('Location: index.php?error=badtoken');
+    exit;
+}
 
-      $username = trim($_POST["username"]);
+$username = trim($_POST['username']);
+$password = trim($_POST['pwd']);
 
-    if(empty(trim($_POST["username"]))) {
-        //$username_err = "Please enter a username.";
-        header("location:index.php");
+if ($username === '' || $password === '') {
+    header('Location: index.php?error=empty');
+    exit;
+}
 
-    }
+$stmt = $conn->prepare('SELECT id, username, password_hash FROM students WHERE username = ?');
+$stmt->bind_param('s', $username);
+$stmt->execute();
+$result = $stmt->get_result();
+$user = $result->fetch_assoc();
 
-    else{
-      $username = trim($_POST["username"]);
-    }
-
-    if(empty(trim($_POST["pwd"]))){
-      header("location:index.php");
-      //$password_err = "Please enter a password.";
-    }
-    else{
-      $password = trim($_POST["pwd"]);
-    }
-
-  
-    //Prepared queries to avoid sql injection
-    $q= "SELECT * FROM `crudtable` WHERE `username` = ? AND `password` = ? ";
-    $stmt=$conn->prepare($q);
-    
-    // only for PDO
-      // $stmt->bind_param(':username',$username);
-      // $stmt->bind_param(':password',$password);
-
-    // for mysqli
-    $stmt->bind_param('ss',$username,$password);  
-
-
-    $stmt->execute();
-    $stmt->store_result();
-    $count =$stmt->num_rows();
-
-    if($count == 1) {
-        header('location:display.php');
-                      }
-
-      else {
-      header('location:index.php');
-
-        }
-
-
-  }
-
-else {
- header('location:index.php');
-
-   }
-
-
-
-
-
- ?>
+if ($user && password_verify($password, $user['password_hash'])) {
+    session_regenerate_id(true);
+    $_SESSION['loggedin'] = true;
+    $_SESSION['username'] = $user['username'];
+    header('Location: display.php');
+} else {
+    header('Location: index.php?error=invalid');
+}

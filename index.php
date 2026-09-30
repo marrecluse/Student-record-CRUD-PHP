@@ -1,5 +1,4 @@
-
-
+<?php require 'conn.php'; ?>
 <!DOCTYPE html>
  <html lang="en" dir="ltr">
    <head>
@@ -36,9 +35,15 @@
       <form action="login.php" method="post">
           <div class="form-group mt-5">
             <div class="text-uppercase mx-auto font-weight-bold display-4">
-                             Welcome 
+                             Welcome
 
                     </div>
+
+            <?php if (isset($_GET['error'])): ?>
+              <div class="alert alert-danger">Invalid username or password.</div>
+            <?php endif; ?>
+
+            <?php echo csrfField(); ?>
 
             <label for="roll" class="mt-5 font-weight-bold">Username: </label>
             <input class="form-control" type="text" name="username" value="">

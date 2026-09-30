@@ -1,3 +1,4 @@
+<?php require 'conn.php'; requireLogin(); ?>
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
   <head>
